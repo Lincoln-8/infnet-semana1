@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Balanceamento de Carga</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <section class="pagina">
+      <header class="cabecalho">
+        <p>Teste cabeçalho</p>
+      </header>
+      <div class="menu-lateral">
+        <ul>
+          <li>link 1</li>
+          <li>link 2</li>
+        </ul>
+      </div>
+      <main class="conteudo">
+        <div class="infos-load-balance">
+          <section class="indice-load-balance">
+            <h1>Balanceamento de carga entre serviços (Load Balance)</h1>
+            <p>
+              A configuração de balanceamento de carga visa a escalabilidade da
+              aplicação e assim permitir o acesso de uma grande quantidade de
+              usuários ao sistema.
+            </p>
+            <ul>
+              <li>
+                <a href="#explicacao-load-balance"
+                  >Balanceamento de carga entre serviços (Load Balance)
+                </a>
+              </li>
+              <li>
+                <ul>
+                  <li>
+                    <a href="#configuracao-servidor"
+                      >Configuração do servidor Master
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#configuracao-slaves"
+                      >Configuração dos servidores Slave
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <a href="#observacoes-load-balance"
+                  >Observações sobre os servidores Master e Slave e o ambiente
+                </a>
+              </li>
+              <li>
+                <a href="#outros-tipos-balanceamento"
+                  >Observações sobre os servidores Master e Slave e o ambiente
+                </a>
+              </li>
+            </ul>
+          </section>
+          <section id="explicacao-load-balance">
+            <h2>Balanceamento de carga entre serviços (Load Balance)</h2>
+            <img
+              src="images/load-balance.jpg"
+              alt="Imagem demonstrando o balanceamento de carga no Protheus."
+              class="imagem-load-balance"
+            />
+            <p>
+              Quando um único servidor (hardware) não possui uma configuração
+              que comporte toda a carga gerada por um grande volume de usuários,
+              é possível configurar uma nova instância da aplicação em um outro
+              servidor disponível e balancear a carga de conexões entre eles.
+            </p>
+            <p>
+              Para que isto seja possível, "nomeamos" um servidor como
+              <em>Master</em> que será o responsável por administrar o
+              balanceamento e configuramos outros servidores como
+              <em>Slave</em> para receber e administrar os usuários balanceados.
+            </p>
+          </section>
+          <section id="configuracao-servidor">
+            <h2>Configuração do servidor Master</h2>
+            <p>
+              Veja a seguir a configuração adicional a ser realizada no arquivo
+              de configuração do servidor Master:
+            </p>
+            <p>
+              O único arquivo de configuração do servidor de aplicação que será
+              alterado com as informações abaixo é o do servidor Master, pois é
+              ele quem administrará o balanceamento de carga de conexões.
+            </p>
+            <pre>
+        [ServerNetwork]
+        MasterConnection=0
+        Servers=SERVER2,SERVER3
+        
+        [SERVER2]
+        Type=TCPIP
+        Server=172.16.77.42
+        Port=1234
+        Connections=1
+        
+        [SERVER3]
+        Type=TCPIP
+        Server=172.16.75.62
+        Port=1235
+        Connections=1
+      </pre
+            >
+          </section>
+          <section id="configuracao-slaves">
+            <h2>Configuração dos servidores Slave</h2>
+            <p>
+              Os servidores Slave, aqueles que recebem os usuários balanceados,
+              requerem o tratamento da chave RootPath e para isso o diretório
+              raíz do ambiente que está no servidor Master deve ser
+              compartilhado com um único usuário com direitos suficientes para
+              acessar, manipular, remover arquivos e pastas e que será utilizado
+              por todos os demais servidores Slave.
+            </p>
+            <p>
+              O tratamento da chave RootPath é necessário porque os arquivos e
+              pastas do ambiente que outrora poderia ser acessado fisicamente
+              serão acessados através de um compartilhamento.
+            </p>
+            <p>
+              Veja a seguir a alteração a ser realizada no arquivo de
+              configuração dos servidores Slave, supondo que a raíz do ambiente
+              esteja no servidor Master:
+            </p>
+            <pre>
+        [Environment]
+        RootPath=\\SERVER1\protheus_data\
+      </pre
+            >
+            <p>
+              Observe que a raíz do ambiente é acessada através de um
+              compartilhamento do servidor Master
+            </p>
+            <p>
+              O valor da chave Connections determina a distribuição entre os
+              slaves usando RAZÃO MATEMÁTICA (Exemplo: 1:2:1). Caso não informe
+              essa chave, ou informado o valor zero esse mesmo slave será
+              <strong>desativado e não sera utilizado no balanceamento</strong>.
+            </p>
+          </section>
+          <section id="observacoes-load-balance">
+            <h2>Observações sobre os servidores Master e Slave e o ambiente</h2>
+            <p>
+              Veja a seguir algumas observações sobre os servidores Master e
+              Slave e o ambiente balanceado:
+            </p>
+            <ul>
+              <li>
+                Um mesmo tipo de sistema operacional deve ser utilizado no
+                servidor Master e nos servidores Slave.
+              </li>
+              <li>
+                Uma cópia do repositório e build deve ser utilizado no servidor
+                Master e nos servidores Slave.
+              </li>
+              <li>
+                Uma atualização de build ou de repositório quando realizada deve
+                ser replicada nos demais servidores.
+              </li>
+              <li>
+                Um mesmo usuário Windows deve ter direitos na pasta
+                compartilhada (RootPath) e deverá ser um do grupo Administrador,
+                para que possa ser associado ao serviço de cada servidor.
+              </li>
+              <li>
+                O nome do ambiente e portas de comunicação deve ser idêntico
+                para todos os servidores.
+              </li>
+              <li>
+                Separe em um servidor dedicado, o ambiente de compilação:
+                compilação é uma operação crítica, exclusiva, que não deve ser
+                executada no mesmo serviço que atende as conexões de usuários do
+                ambiente de produção.
+              </li>
+              <li>
+                No caso de balanceamento de carga das conexões em schedule,
+                deve-se escolher um slave para receber a conexão. Lembre-se que
+                o servidor Master NÃO recebe conexões.
+              </li>
+              <li>
+                O valor de RootPath=\\SERVER1\protheus_data\ deve ser a mesma
+                para todas as instâncias para os ambientes Environment de mesmo
+                nome. Para mais informações, consulte a documentação da seção
+                ServerNetwork.
+              </li>
+              <li>
+                Reserve 2 GB para cada instância do servidor de aplicação, que
+                pode ser na mesma máquina desde que tenha capacidade para isso.
+              </li>
+              <li>
+                Em um ambiente balanceado, cada ambiente deve ter seu próprio
+                RPO, sendo todos iguais. NÃO compartilhe RPO em rede, pelos
+                seguintes motivos:
+              </li>
+              <li>
+                <ul>
+                  <li>
+                    Em casos conhecidos os logs mostram que o sistema
+                    operacional está causando os erros de comunicação nos
+                    servidores de aplicação e não nas estações.
+                  </li>
+                  <li>
+                    As mensagens que as estações enviam no momento de uma nova
+                    conexão mostram que foi a parte servidora da operação que
+                    cortou a conexão de rede.
+                  </li>
+                  <li>
+                    Os servidores de aplicação fazem leitura intensiva dos RPOs
+                    quando executam o ERP, pois neles estão compiladas todas as
+                    regras de negócio, se o RPO é compartilhado em rede, tem
+                    como resultado:
+                  </li>
+                  <li>
+                    <ul>
+                      <li>
+                        Degradação na performance de execução dos servidores de
+                        aplicação que utilizam o RPO compartilhado (tráfego de
+                        RPO em rede).
+                      </li>
+                      <li>
+                        O aumento do consumo de recursos de rede nos servidores
+                        que compartilham RPO, tipicamente, saturam o uso das
+                        interfaces de rede, criando uma concorrência de
+                        transmissão de dados com as estações que utilizam o
+                        TOTVS | SmartClient.
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </section>
+          <section id="outros-tipos-balanceamento">
+            <h2>Outros tipo de balanceamento</h2>
+            <p>
+              O balanceamento de carga do Protheus não funciona como proxy
+              reverso, ou seja, toda a comunicação não passa através do serviço
+              de Protheus configurado como master, este apenas atua como
+              distribuidor da carga de conexão, e este mecanismo foi construído
+              para prover melhor eficiência do balanceamento, onde o master não
+              passa a ser um ponto crítico do sistema – caso o master fique
+              indisponível, os slaves continuam executando as conexões neles já
+              estabelecidas. Caso seja necessário fazer um balanceamento de
+              carga de rede para serviços como Telnet, RPC ( Advpl ) ou
+              WebServices, o Protheus não provê uma solução nativa para essa
+              situação, mas é possível utilizar soluções de mercado, disponíveis
+              tanto em software quanto em hardware.
+            </p>
+            <p>
+              Existem diversas soluções, como o Network Load Balancing do
+              Windows, o Linux Load Balancer da Red Hat, o HAProxy no Ubuntu, o
+              ZEN Load Balancer, entre outros. Essas soluções podem ser
+              utilizadas sem prejuízo ao comportamento do sistema, desde que
+              elas sejam transparentes para a aplicação, onde não exista
+              alteração dos pacotes trafegados. Para maiores informações,
+              verifique com o fornecedor da solução se a mesma atende a este
+              critério de transparência.
+            </p>
+          </section>
+        </div>
+      </main>
+      <footer class="rodape">
+        <p>Teste rodape</p>
+      </footer>
+    </section>
+  </body>
+</html>
