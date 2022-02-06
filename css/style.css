@@ -2,9 +2,35 @@
   font-family: "Roboto", Arial, Helvetica, sans-serif;
   font-size: 1.1em;
   text-align: justify;
-  background: #f0f8ff;
   display: grid;
-  grid-template-areas: "cabecalho" "menu-lateral" "conteudo" "rodape";
+  grid-template-areas:
+    "menu-lateral cabecalho"
+    "menu-lateral conteudo"
+    "menu-lateral rodape";
+}
+
+.cabecalho {
+  grid-area: cabecalho;
+}
+
+.menu-lateral {
+  grid-area: menu-lateral;
+  width: 200px;
+}
+
+.conteudo {
+  grid-area: conteudo;
+}
+
+.rodape {
+  grid-area: rodape;
+}
+
+.cabecalho img {
+  /*justify-self: stretch;*/
+  width: 200px;
+  display: block;
+  margin: auto;
 }
 
 .infos-load-balance {
